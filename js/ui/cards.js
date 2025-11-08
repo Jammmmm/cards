@@ -2,7 +2,7 @@ const CardUI = (() => {
     const container = document.getElementById("card-container");
     const svgNS = "http://www.w3.org/2000/svg";
     const LONG_PRESS_DURATION = 500;
-    const MOVE_THRESHOLD = 6;
+    const MOVE_THRESHOLD = 24;
     const RELATION_SUGGESTIONS = [
         'relates to',
         'type of',
@@ -322,6 +322,13 @@ const CardUI = (() => {
 
         div.appendChild(palette);
 
+        const connectionPad = document.createElement('div');
+        connectionPad.classList.add('connection-pad');
+        connectionPad.setAttribute('role', 'button');
+        connectionPad.setAttribute('aria-label', 'Hold to start connecting this card to another');
+        connectionPad.innerHTML = '<span class="connection-pad-icon">⤳</span><span class="connection-pad-text">Hold to connect</span>';
+        div.appendChild(connectionPad);
+
         const tagContainer = document.createElement("div");
         tagContainer.classList.add("tags");
         div.appendChild(tagContainer);
@@ -383,12 +390,18 @@ const CardUI = (() => {
             }
         }
 
+        function resetConnectionVisualState() {
+            connectionPad.classList.remove('press-ready');
+            connectionPad.classList.remove('active');
+        }
+
         function endConnectionSequence(event, cancelled = false) {
             if (connectionPointerId === null || event.pointerId !== connectionPointerId) {
                 return;
             }
 
             clearLongPressTimer();
+            resetConnectionVisualState();
             if (div.hasPointerCapture(connectionPointerId)) {
                 div.releasePointerCapture(connectionPointerId);
             }
@@ -424,8 +437,12 @@ const CardUI = (() => {
             div.setPointerCapture(connectionPointerId);
 
             clearLongPressTimer();
+            resetConnectionVisualState();
+            connectionPad.classList.add('press-ready');
             longPressTimer = setTimeout(() => {
                 connectionStarted = true;
+                connectionPad.classList.remove('press-ready');
+                connectionPad.classList.add('active');
                 startConnectionDrag(card.id, lastPointerEvent || event);
             }, LONG_PRESS_DURATION);
         });
@@ -439,6 +456,7 @@ const CardUI = (() => {
                 const dy = event.clientY - connectionStart.y;
                 if (Math.sqrt(dx * dx + dy * dy) > MOVE_THRESHOLD) {
                     clearLongPressTimer();
+                    resetConnectionVisualState();
                     if (div.hasPointerCapture(connectionPointerId)) {
                         div.releasePointerCapture(connectionPointerId);
                     }
