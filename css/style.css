@@ -27,10 +27,11 @@ body {
     width: 170px; /* Increased from 150px */
     padding: 10px;
     background: #fff;
-    border: 2px solid #ccc; 
+    border: 2px solid #ccc;
     border-radius: 8px;
     cursor: grab;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1;
 }
 
 .card .card-title {
@@ -135,6 +136,42 @@ body {
 
 .color-swatch.selected {
     border: 2px solid #3498db;
+}
+
+/* --- Connection Layer --- */
+.connection-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+    z-index: 0;
+}
+
+.connector-path {
+    stroke: #555;
+    stroke-width: 2px;
+    fill: none;
+    pointer-events: stroke;
+    transition: stroke 0.2s;
+}
+
+.connector-path:hover {
+    stroke: #2c3e50;
+}
+
+.connector-label {
+    fill: #2c3e50;
+    font-size: 12px;
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
+}
+
+.temp-connector {
+    stroke-dasharray: 6 4;
+    opacity: 0.7;
 }
 
 /* --- Modal Component --- */

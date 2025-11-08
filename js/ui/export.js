@@ -116,13 +116,15 @@ const CardExport = (() => {
         return { content, mimeType: 'text/html', extension: 'html' };
     }
     
-    function generateJsonContent(cards) {
-        const content = JSON.stringify(cards, null, 2);
+    function generateJsonContent(cards, connectors) {
+        const content = JSON.stringify({ cards, connectors }, null, 2);
         return { content, mimeType: 'application/json', extension: 'json' };
     }
 
     function exportFilteredData(options) {
-        let cards = CardModel.getCards();
+        const state = CardModel.getState();
+        let cards = state.cards;
+        let connectors = state.connectors;
         if (options.selectedTags.length > 0) {
             cards = cards.filter(card => options.selectedTags.some(tag => card.tags.includes(tag)));
         }
@@ -134,12 +136,21 @@ const CardExport = (() => {
             alert("No cards match the selected filters.");
             return;
         }
-        
+
+        const cardIdSet = new Set(cards.map(card => card.id));
+        connectors = connectors.filter(connector => cardIdSet.has(connector.fromCardId) && cardIdSet.has(connector.toCardId));
+
         let result;
         switch(options.format) {
-            case 'html': result = generateHtmlContent(cards, options); break;
-            case 'json': result = generateJsonContent(cards); break;
-            default: result = generateMarkdownContent(cards, options); break;
+            case 'html':
+                result = generateHtmlContent(cards, options);
+                break;
+            case 'json':
+                result = generateJsonContent(cards, connectors);
+                break;
+            default:
+                result = generateMarkdownContent(cards, options);
+                break;
         }
 
         const blob = new Blob([result.content], { type: result.mimeType });
