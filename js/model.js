@@ -4,6 +4,35 @@ const CardModel = (() => {
     let idCounter = 1;
     let connectorIdCounter = 1;
 
+    function normalizeEndpoint(endpoint, fallbackType = 'card') {
+        if (endpoint && typeof endpoint === 'object' && 'id' in endpoint) {
+            const type = endpoint.type === 'connector' ? 'connector' : 'card';
+            const id = Number(endpoint.id);
+            if (!Number.isFinite(id)) return null;
+            return { type, id };
+        }
+
+        const id = Number(endpoint);
+        if (!Number.isFinite(id)) return null;
+        return { type: fallbackType, id };
+    }
+
+    function endpointExists(endpoint) {
+        if (!endpoint) return false;
+        if (endpoint.type === 'card') {
+            return cards.some(c => c.id === endpoint.id);
+        }
+        if (endpoint.type === 'connector') {
+            return connectors.some(c => c.id === endpoint.id);
+        }
+        return false;
+    }
+
+    function clonePosition(position) {
+        if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') return null;
+        return { x: position.x, y: position.y };
+    }
+
     function addCard(title = "New Title", blurb = "Click to edit...") {
         const card = {
             id: idCounter++,
@@ -32,17 +61,42 @@ const CardModel = (() => {
         return connectors;
     }
 
-    function addConnector(fromCardId, toCardId, type = 'relates to') {
-        const fromExists = cards.some(c => c.id === fromCardId);
-        const toExists = cards.some(c => c.id === toCardId);
-        if (!fromExists || !toExists || fromCardId === toCardId) {
+    function getConnectorPosition(id) {
+        const connector = connectors.find(c => c.id === id);
+        if (!connector) return null;
+        if (!connector.position) return null;
+        return clonePosition(connector.position);
+    }
+
+    function setConnectorPosition(id, position, options = {}) {
+        const connector = connectors.find(c => c.id === id);
+        if (!connector || !position) return;
+        const { autoPosition } = options;
+        connector.position = { x: position.x, y: position.y };
+        if (typeof autoPosition === 'boolean') {
+            connector.autoPosition = autoPosition;
+        }
+    }
+
+    function addConnector(fromInput, toInput, type = 'relates to', options = {}) {
+        const from = normalizeEndpoint(fromInput, 'card');
+        const to = normalizeEndpoint(toInput, 'card');
+        if (!from || !to) return null;
+
+        if (!endpointExists(from) || !endpointExists(to)) {
+            return null;
+        }
+
+        if (from.type === to.type && from.id === to.id) {
             return null;
         }
 
         const normalizedType = type && type.trim() ? type.trim() : 'relates to';
         const duplicate = connectors.some(connector =>
-            connector.fromCardId === fromCardId &&
-            connector.toCardId === toCardId &&
+            connector.from.type === from.type &&
+            connector.from.id === from.id &&
+            connector.to.type === to.type &&
+            connector.to.id === to.id &&
             connector.type.toLowerCase() === normalizedType.toLowerCase()
         );
         if (duplicate) {
@@ -51,9 +105,11 @@ const CardModel = (() => {
 
         const connector = {
             id: connectorIdCounter++,
-            fromCardId,
-            toCardId,
-            type: normalizedType
+            from,
+            to,
+            type: normalizedType,
+            position: options.position ? clonePosition(options.position) : { x: 0, y: 0 },
+            autoPosition: options.autoPosition !== undefined ? options.autoPosition : true
         };
 
         connectors.push(connector);
@@ -66,10 +122,20 @@ const CardModel = (() => {
     }
 
     function deleteConnector(id) {
-        const index = connectors.findIndex(c => c.id === id);
-        if (index > -1) {
-            connectors.splice(index, 1);
-        }
+        const toRemove = new Set();
+        const collectDependents = (targetId) => {
+            if (toRemove.has(targetId)) return;
+            toRemove.add(targetId);
+            connectors
+                .filter(connector =>
+                    (connector.from.type === 'connector' && connector.from.id === targetId) ||
+                    (connector.to.type === 'connector' && connector.to.id === targetId)
+                )
+                .forEach(connector => collectDependents(connector.id));
+        };
+
+        collectDependents(id);
+        connectors = connectors.filter(connector => !toRemove.has(connector.id));
     }
 
     function getConnector(id) {
@@ -93,21 +159,43 @@ const CardModel = (() => {
             if (Array.isArray(loadedData.connectors)) {
                 const seen = new Set();
                 const sanitized = [];
+
                 loadedData.connectors.forEach(connector => {
-                    if (!cardIds.has(connector.fromCardId) || !cardIds.has(connector.toCardId) || connector.fromCardId === connector.toCardId) {
+                    const from = connector.from ? normalizeEndpoint(connector.from) : normalizeEndpoint(connector.fromCardId, 'card');
+                    const to = connector.to ? normalizeEndpoint(connector.to) : normalizeEndpoint(connector.toCardId, 'card');
+                    if (!from || !to) {
                         return;
                     }
+
+                    const fromValid = from.type === 'card' ? cardIds.has(from.id) : true;
+                    const toValid = to.type === 'card' ? cardIds.has(to.id) : true;
+                    if (!fromValid || !toValid) {
+                        return;
+                    }
+
+                    if (from.type === to.type && from.id === to.id) {
+                        return;
+                    }
+
                     const type = connector.type && typeof connector.type === 'string' && connector.type.trim() ? connector.type.trim() : 'relates to';
-                    const key = `${connector.fromCardId}->${connector.toCardId}:${type.toLowerCase()}`;
+                    const key = `${from.type}:${from.id}->${to.type}:${to.id}:${type.toLowerCase()}`;
                     if (seen.has(key)) {
                         return;
                     }
                     seen.add(key);
+
+                    let position = null;
+                    if (connector.position && typeof connector.position.x === 'number' && typeof connector.position.y === 'number') {
+                        position = { x: connector.position.x, y: connector.position.y };
+                    }
+
                     sanitized.push({
                         id: typeof connector.id === 'number' && Number.isFinite(connector.id) ? connector.id : null,
-                        fromCardId: connector.fromCardId,
-                        toCardId: connector.toCardId,
-                        type
+                        from,
+                        to,
+                        type,
+                        position,
+                        autoPosition: connector.autoPosition !== undefined ? Boolean(connector.autoPosition) : true
                     });
                 });
 
@@ -120,9 +208,11 @@ const CardModel = (() => {
                 let nextId = maxId + 1;
                 connectors = sanitized.map(connector => ({
                     id: typeof connector.id === 'number' ? connector.id : nextId++,
-                    fromCardId: connector.fromCardId,
-                    toCardId: connector.toCardId,
-                    type: connector.type
+                    from: connector.from,
+                    to: connector.to,
+                    type: connector.type,
+                    position: connector.position ? { x: connector.position.x, y: connector.position.y } : { x: 0, y: 0 },
+                    autoPosition: connector.autoPosition !== undefined ? connector.autoPosition : true
                 }));
             } else {
                 connectors = [];
@@ -134,13 +224,52 @@ const CardModel = (() => {
 
         idCounter = Math.max(0, ...cards.map(c => c.id)) + 1;
         connectorIdCounter = Math.max(0, ...connectors.map(c => c.id)) + 1;
+
+        // Remove connectors that reference non-existent connectors after ids reset
+        let stable = false;
+        while (!stable) {
+            stable = true;
+            const connectorIds = new Set(connectors.map(connector => connector.id));
+            const filtered = connectors.filter(connector => {
+                const fromValid = connector.from.type === 'connector' ? connectorIds.has(connector.from.id) : true;
+                const toValid = connector.to.type === 'connector' ? connectorIds.has(connector.to.id) : true;
+                return fromValid && toValid;
+            });
+            if (filtered.length !== connectors.length) {
+                connectors = filtered;
+                stable = false;
+            }
+        }
     }
 
     function deleteCard(id) {
         const cardIndex = cards.findIndex(c => c.id === id);
         if (cardIndex > -1) {
             cards.splice(cardIndex, 1);
-            connectors = connectors.filter(connector => connector.fromCardId !== id && connector.toCardId !== id);
+            const removedConnectors = connectors
+                .filter(connector =>
+                    (connector.from.type === 'card' && connector.from.id === id) ||
+                    (connector.to.type === 'card' && connector.to.id === id)
+                )
+                .map(connector => connector.id);
+
+            const toRemove = new Set(removedConnectors);
+            const collectDependents = (targetId) => {
+                connectors
+                    .filter(connector =>
+                        (connector.from.type === 'connector' && connector.from.id === targetId) ||
+                        (connector.to.type === 'connector' && connector.to.id === targetId)
+                    )
+                    .forEach(connector => {
+                        if (!toRemove.has(connector.id)) {
+                            toRemove.add(connector.id);
+                            collectDependents(connector.id);
+                        }
+                    });
+            };
+
+            removedConnectors.forEach(collectDependents);
+            connectors = connectors.filter(connector => !toRemove.has(connector.id));
         }
     }
 
@@ -149,6 +278,8 @@ const CardModel = (() => {
         updateCard,
         getCards,
         getConnectors,
+        getConnectorPosition,
+        setConnectorPosition,
         addConnector,
         updateConnector,
         deleteConnector,

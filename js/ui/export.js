@@ -60,12 +60,62 @@ const CardExport = (() => {
 
     // --- Content Generators for Each Format ---
 
-    function generateMarkdownContent(cards, options) {
+    function getConnectorLabel(connector) {
+        if (!connector) {
+            return 'relates to';
+        }
+        const label = connector.type !== undefined && connector.type !== null ? connector.type.toString().trim() : '';
+        return label || 'relates to';
+    }
+
+    function describeEndpoint(endpoint, cardLookup, connectorLookup) {
+        if (!endpoint) return 'Unknown';
+        if (endpoint.type === 'card') {
+            const card = cardLookup.get(endpoint.id);
+            if (!card) {
+                return `Card #${endpoint.id}`;
+            }
+            const title = card.title ? card.title.trim() : `Card #${card.id}`;
+            return card.nucleus ? `(Nucleus) ${title}` : title;
+        }
+        if (endpoint.type === 'connector') {
+            const connector = connectorLookup.get(endpoint.id);
+            if (!connector) {
+                return `Connector #${endpoint.id}`;
+            }
+            const label = getConnectorLabel(connector);
+            return `Connector #${connector.id} (“${label}”)`;
+        }
+        return 'Unknown';
+    }
+
+    function describeEndpointHtml(endpoint, cardLookup, connectorLookup) {
+        if (!endpoint) return 'Unknown';
+        if (endpoint.type === 'card') {
+            const card = cardLookup.get(endpoint.id);
+            if (!card) {
+                return `Card #${endpoint.id}`;
+            }
+            const title = card.title ? card.title.trim() : `Card #${card.id}`;
+            return card.nucleus ? `<strong>(Nucleus) ${title}</strong>` : `<strong>${title}</strong>`;
+        }
+        if (endpoint.type === 'connector') {
+            const connector = connectorLookup.get(endpoint.id);
+            if (!connector) {
+                return `Connector #${endpoint.id}`;
+            }
+            const label = getConnectorLabel(connector);
+            return `<strong>Connector #${connector.id}</strong> (“${label}”)`;
+        }
+        return 'Unknown';
+    }
+
+    function generateMarkdownContent(cards, connectors, options) {
         const { tagsMap, untaggedCards } = processCards(cards);
         const sortedTags = Object.keys(tagsMap).sort();
         const now = new Date();
         const timestamp = `${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
-        
+
         let content = `# ${options.title}\n\n*Generated on: ${timestamp}*\n\n---\n\n`;
 
         const createList = (cardList) => {
@@ -84,10 +134,28 @@ const CardExport = (() => {
             content += `## Untagged Cards\n${createList(untaggedCards)}\n---\n\n`;
         }
 
+        if (connectors.length > 0) {
+            const cardLookup = new Map(cards.map(card => [card.id, card]));
+            const connectorLookup = new Map(connectors.map(connector => [connector.id, connector]));
+            const sortedConnectors = [...connectors].sort((a, b) => {
+                const typeCompare = getConnectorLabel(a).localeCompare(getConnectorLabel(b));
+                if (typeCompare !== 0) return typeCompare;
+                return a.id - b.id;
+            });
+            content += `## Connections\n`;
+            sortedConnectors.forEach(connector => {
+                const from = describeEndpoint(connector.from, cardLookup, connectorLookup);
+                const to = describeEndpoint(connector.to, cardLookup, connectorLookup);
+                const label = getConnectorLabel(connector);
+                content += `- **${label}**: ${from} ➔ ${to}\n`;
+            });
+            content += `\n---\n\n`;
+        }
+
         return { content, mimeType: 'text/markdown', extension: 'md' };
     }
 
-    function generateHtmlContent(cards, options) {
+    function generateHtmlContent(cards, connectors, options) {
         const { tagsMap, untaggedCards } = processCards(cards);
         const sortedTags = Object.keys(tagsMap).sort();
         const now = new Date();
@@ -111,7 +179,25 @@ const CardExport = (() => {
         if (untaggedCards.length > 0) {
             content += `<h2>Untagged Cards</h2>${createList(untaggedCards)}`;
         }
-        
+
+        if (connectors.length > 0) {
+            const cardLookup = new Map(cards.map(card => [card.id, card]));
+            const connectorLookup = new Map(connectors.map(connector => [connector.id, connector]));
+            const sortedConnectors = [...connectors].sort((a, b) => {
+                const typeCompare = getConnectorLabel(a).localeCompare(getConnectorLabel(b));
+                if (typeCompare !== 0) return typeCompare;
+                return a.id - b.id;
+            });
+            content += `<h2>Connections</h2><ul>`;
+            sortedConnectors.forEach(connector => {
+                const from = describeEndpointHtml(connector.from, cardLookup, connectorLookup);
+                const to = describeEndpointHtml(connector.to, cardLookup, connectorLookup);
+                const label = getConnectorLabel(connector);
+                content += `<li><strong>${label}</strong>: ${from} ➔ ${to}</li>`;
+            });
+            content += `</ul>`;
+        }
+
         content += `</body></html>`;
         return { content, mimeType: 'text/html', extension: 'html' };
     }
@@ -138,18 +224,50 @@ const CardExport = (() => {
         }
 
         const cardIdSet = new Set(cards.map(card => card.id));
-        connectors = connectors.filter(connector => cardIdSet.has(connector.fromCardId) && cardIdSet.has(connector.toCardId));
+        const initialConnectors = state.connectors.filter(connector => {
+            if (connector.from.type === 'card' && !cardIdSet.has(connector.from.id)) {
+                return false;
+            }
+            if (connector.to.type === 'card' && !cardIdSet.has(connector.to.id)) {
+                return false;
+            }
+            return true;
+        });
+
+        const allowedKeys = new Set(Array.from(cardIdSet).map(id => `card:${id}`));
+        const pending = new Map(initialConnectors.map(connector => [connector.id, connector]));
+        const includedConnectors = [];
+
+        let expanded = true;
+        while (expanded) {
+            expanded = false;
+            for (const [connectorId, connector] of Array.from(pending.entries())) {
+                const fromKey = `${connector.from.type}:${connector.from.id}`;
+                const toKey = `${connector.to.type}:${connector.to.id}`;
+                if (allowedKeys.has(fromKey) && allowedKeys.has(toKey)) {
+                    includedConnectors.push(connector);
+                    pending.delete(connectorId);
+                    const connectorKey = `connector:${connectorId}`;
+                    if (!allowedKeys.has(connectorKey)) {
+                        allowedKeys.add(connectorKey);
+                    }
+                    expanded = true;
+                }
+            }
+        }
+
+        connectors = includedConnectors;
 
         let result;
         switch(options.format) {
             case 'html':
-                result = generateHtmlContent(cards, options);
+                result = generateHtmlContent(cards, connectors, options);
                 break;
             case 'json':
                 result = generateJsonContent(cards, connectors);
                 break;
             default:
-                result = generateMarkdownContent(cards, options);
+                result = generateMarkdownContent(cards, connectors, options);
                 break;
         }
 

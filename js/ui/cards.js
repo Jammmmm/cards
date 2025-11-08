@@ -46,6 +46,44 @@ const CardUI = (() => {
         };
     }
 
+    function getConnectorCenter(connectorId) {
+        const position = CardModel.getConnectorPosition(connectorId);
+        if (!position) return null;
+        return { x: position.x, y: position.y };
+    }
+
+    function getEndpointCenter(endpoint) {
+        if (!endpoint) return null;
+        if (endpoint.type === 'card') {
+            return getCardCenter(endpoint.id);
+        }
+        if (endpoint.type === 'connector') {
+            return getConnectorCenter(endpoint.id);
+        }
+        return null;
+    }
+
+    function identifyTargetElement(element) {
+        if (!element) return null;
+        const cardEl = element.closest && element.closest('.card');
+        if (cardEl) {
+            return { type: 'card', id: Number(cardEl.dataset.cardId) };
+        }
+        const connectorEl = element.closest && element.closest('.connector-node');
+        if (connectorEl) {
+            return { type: 'connector', id: Number(connectorEl.dataset.connectorId) };
+        }
+        if (element.classList && element.classList.contains('connector-node')) {
+            return { type: 'connector', id: Number(element.dataset.connectorId) };
+        }
+        return null;
+    }
+
+    function findTargetAtPoint(clientX, clientY) {
+        const element = document.elementFromPoint(clientX, clientY);
+        return identifyTargetElement(element);
+    }
+
     function computeControlPoint(start, end) {
         const midX = (start.x + end.x) / 2;
         const midY = (start.y + end.y) / 2;
@@ -89,9 +127,11 @@ const CardUI = (() => {
         const layer = ensureConnectionLayer();
         layer.innerHTML = '';
 
-        CardModel.getConnectors().forEach(connector => {
-            const start = getCardCenter(connector.fromCardId);
-            const end = getCardCenter(connector.toCardId);
+        const connectors = CardModel.getConnectors();
+
+        connectors.forEach(connector => {
+            const start = getEndpointCenter(connector.from);
+            const end = getEndpointCenter(connector.to);
             if (!start || !end) {
                 return;
             }
@@ -103,16 +143,45 @@ const CardUI = (() => {
             path.dataset.connectorId = connector.id;
             layer.appendChild(path);
 
-            const midPoint = computeQuadraticPoint(start, control, end, 0.5);
+            let nodePosition;
+            if (connector.autoPosition || !connector.position) {
+                nodePosition = computeQuadraticPoint(start, control, end, 0.5);
+                CardModel.setConnectorPosition(connector.id, nodePosition, { autoPosition: true });
+            } else {
+                nodePosition = { x: connector.position.x, y: connector.position.y };
+            }
+
+            const group = document.createElementNS(svgNS, 'g');
+            group.classList.add('connector-node');
+            group.dataset.connectorId = connector.id;
+
+            const background = document.createElementNS(svgNS, 'rect');
+            background.classList.add('connector-node-bg');
+            group.appendChild(background);
+
             const text = document.createElementNS(svgNS, 'text');
             text.classList.add('connector-label');
-            text.setAttribute('x', midPoint.x);
-            text.setAttribute('y', midPoint.y - 6);
             text.setAttribute('text-anchor', 'middle');
-            text.setAttribute('dominant-baseline', 'central');
+            text.setAttribute('dominant-baseline', 'middle');
             text.textContent = connector.type;
-            text.dataset.connectorId = connector.id;
-            layer.appendChild(text);
+            group.appendChild(text);
+
+            layer.appendChild(group);
+
+            const paddingX = 12;
+            const textLength = text.getComputedTextLength();
+            const height = 24;
+            const width = Math.max(textLength + paddingX * 2, height);
+
+            background.setAttribute('x', nodePosition.x - width / 2);
+            background.setAttribute('y', nodePosition.y - height / 2);
+            background.setAttribute('width', width);
+            background.setAttribute('height', height);
+            background.setAttribute('rx', height / 2);
+            background.setAttribute('ry', height / 2);
+
+            text.setAttribute('x', nodePosition.x);
+            text.setAttribute('y', nodePosition.y);
 
             const editHandler = () => editConnector(connector.id);
             const deleteHandler = (event) => {
@@ -121,9 +190,10 @@ const CardUI = (() => {
             };
 
             path.addEventListener('click', editHandler);
-            text.addEventListener('click', editHandler);
             path.addEventListener('contextmenu', deleteHandler);
-            text.addEventListener('contextmenu', deleteHandler);
+            group.addEventListener('contextmenu', deleteHandler);
+
+            setupConnectorNodeInteractions(group, connector.id);
         });
 
         if (activeConnection && tempConnectionPath) {
@@ -131,13 +201,96 @@ const CardUI = (() => {
         }
     }
 
-    function startConnectionDrag(cardId, pointerEvent) {
-        const start = getCardCenter(cardId);
+    function setupConnectorNodeInteractions(group, connectorId) {
+        let pointerId = null;
+        let longPressTimer = null;
+        let connectionStarted = false;
+        let startPoint = null;
+        let lastPointerEvent = null;
+
+        const clearTimer = () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        };
+
+        function resetState(cancelConnection = false) {
+            clearTimer();
+            if (pointerId !== null && group.hasPointerCapture && group.hasPointerCapture(pointerId)) {
+                group.releasePointerCapture(pointerId);
+            }
+            pointerId = null;
+            startPoint = null;
+            lastPointerEvent = null;
+            if (cancelConnection) {
+                cancelActiveConnection();
+            }
+            connectionStarted = false;
+            group.classList.remove('connector-node-active');
+        }
+
+        group.addEventListener('pointerdown', (event) => {
+            if (event.button !== undefined && event.button !== 0) return;
+            event.stopPropagation();
+            event.preventDefault();
+            cancelActiveConnection();
+            pointerId = event.pointerId;
+            startPoint = { x: event.clientX, y: event.clientY };
+            lastPointerEvent = event;
+            connectionStarted = false;
+            group.classList.remove('connector-node-active');
+            if (group.setPointerCapture) {
+                group.setPointerCapture(pointerId);
+            }
+            clearTimer();
+            longPressTimer = setTimeout(() => {
+                connectionStarted = true;
+                group.classList.add('connector-node-active');
+                startConnectionDrag({ type: 'connector', id: connectorId }, lastPointerEvent || event);
+            }, LONG_PRESS_DURATION);
+        });
+
+        group.addEventListener('pointermove', (event) => {
+            if (pointerId === null || event.pointerId !== pointerId) return;
+            lastPointerEvent = event;
+            if (!connectionStarted) {
+                const dx = event.clientX - startPoint.x;
+                const dy = event.clientY - startPoint.y;
+                if (Math.sqrt(dx * dx + dy * dy) > MOVE_THRESHOLD) {
+                    resetState(true);
+                }
+                return;
+            }
+            updateConnectionDrag(event);
+        });
+
+        const finalizeConnection = (event, cancelled = false) => {
+            if (pointerId === null || event.pointerId !== pointerId) return;
+            const started = connectionStarted;
+            resetState(cancelled);
+            if (!started) {
+                if (!cancelled) {
+                    editConnector(connectorId);
+                }
+                return;
+            }
+
+            const target = cancelled ? null : findTargetAtPoint(event.clientX, event.clientY);
+            finishConnectionDrag(target);
+        };
+
+        group.addEventListener('pointerup', (event) => finalizeConnection(event));
+        group.addEventListener('pointercancel', (event) => finalizeConnection(event, true));
+    }
+
+    function startConnectionDrag(source, pointerEvent) {
+        const start = getEndpointCenter(source);
         if (!start) return;
         ensureConnectionLayer();
 
         activeConnection = {
-            fromCardId: cardId,
+            from: { type: source.type, id: source.id },
             start
         };
 
@@ -154,25 +307,37 @@ const CardUI = (() => {
             x: pointerEvent.clientX - containerRect.left,
             y: pointerEvent.clientY - containerRect.top
         };
-        const { start } = activeConnection;
+        const start = getEndpointCenter(activeConnection.from) || activeConnection.start;
         const control = computeControlPoint(start, end);
         tempConnectionPath.setAttribute('d', `M ${start.x} ${start.y} Q ${control.x} ${control.y} ${end.x} ${end.y}`);
     }
 
-    function finishConnectionDrag(targetCardId) {
+    function finishConnectionDrag(targetEndpoint) {
         if (tempConnectionPath && tempConnectionPath.parentNode) {
             tempConnectionPath.parentNode.removeChild(tempConnectionPath);
         }
         tempConnectionPath = null;
 
-        if (activeConnection && targetCardId && targetCardId !== activeConnection.fromCardId) {
+        if (activeConnection && targetEndpoint && (targetEndpoint.type !== activeConnection.from.type || targetEndpoint.id !== activeConnection.from.id)) {
             const suggestionText = `Suggestions: ${RELATION_SUGGESTIONS.join(', ')}`;
-            const relationType = prompt(`Relationship type between cards?\n${suggestionText}`, RELATION_SUGGESTIONS[0]);
+            let defaultSuggestion = RELATION_SUGGESTIONS[0];
+            if (activeConnection.from.type === 'connector') {
+                const sourceConnector = CardModel.getConnector(activeConnection.from.id);
+                if (sourceConnector && sourceConnector.type) {
+                    defaultSuggestion = sourceConnector.type;
+                }
+            }
+            const relationType = prompt(`Relationship type between items?\n${suggestionText}`, defaultSuggestion);
             if (relationType !== null) {
                 const trimmed = relationType.trim();
-                const created = CardModel.addConnector(activeConnection.fromCardId, targetCardId, trimmed || RELATION_SUGGESTIONS[0]);
+                const created = CardModel.addConnector(
+                    { type: activeConnection.from.type, id: activeConnection.from.id },
+                    { type: targetEndpoint.type, id: targetEndpoint.id },
+                    trimmed || defaultSuggestion,
+                    { autoPosition: true }
+                );
                 if (!created) {
-                    alert('A connector with this relationship already exists between the selected cards.');
+                    alert('A connector with this relationship already exists between the selected items.');
                 }
                 renderConnections();
             }
@@ -187,6 +352,7 @@ const CardUI = (() => {
         }
         tempConnectionPath = null;
         activeConnection = null;
+        document.querySelectorAll('.connector-node-active').forEach(el => el.classList.remove('connector-node-active'));
     }
 
     function createCardElement(card) {
@@ -407,10 +573,8 @@ const CardUI = (() => {
             }
 
             if (connectionStarted && !cancelled) {
-                const elementUnderPointer = document.elementFromPoint(event.clientX, event.clientY);
-                const targetCard = elementUnderPointer ? elementUnderPointer.closest('.card') : null;
-                const targetId = targetCard ? Number(targetCard.dataset.cardId) : null;
-                finishConnectionDrag(targetId || null);
+                const target = findTargetAtPoint(event.clientX, event.clientY);
+                finishConnectionDrag(target || null);
                 suppressClick = true;
                 setTimeout(() => {
                     suppressClick = false;
@@ -443,7 +607,7 @@ const CardUI = (() => {
                 connectionStarted = true;
                 connectionPad.classList.remove('press-ready');
                 connectionPad.classList.add('active');
-                startConnectionDrag(card.id, lastPointerEvent || event);
+                startConnectionDrag({ type: 'card', id: card.id }, lastPointerEvent || event);
             }, LONG_PRESS_DURATION);
         });
 
