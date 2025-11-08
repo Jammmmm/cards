@@ -22,8 +22,8 @@ document.getElementById("save-screenshot").addEventListener("click", () => {
 });
 
 document.getElementById("save-session").addEventListener("click", () => {
-    const cards = CardModel.getCards();
-    const dataStr = JSON.stringify(cards, null, 2);
+    const sessionState = CardModel.getState();
+    const dataStr = JSON.stringify(sessionState, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
