@@ -10,35 +10,43 @@ This project is a lightweight, single-page web application for creating and orga
 Features
 --------
 
-* **Dynamic Card Creation**: Create new cards on the canvas with a single click.
+* **Dynamic Card Creation**: Spin up a new card on the canvas with a single click.
 
-* **In-place Editing**: Directly edit a card's title and blurb by clicking on the text.
+* **Inline Editing**: Click a card's title or blurb to update it without leaving the canvas.
 
-* **Freeform Drag & Drop**: Reposition cards anywhere on the canvas by dragging them.
+* **Freeform Drag & Drop**: Drag cards around with the dedicated handle to arrange ideas spatially.
 
 * **Categorization & Styling**:
-  
-  * Organize cards using custom
-    **tags** that can be added or removed easily.
-  
-  * Assign
-    **colors** from a predefined palette to visually group ideas.
-  
-  * Mark important cards as a "
-    **nucleus**" with a double-click to make them stand out with a special border.
+
+  * Add and remove
+    **tags** to cluster related thoughts.
+
+  * Choose from a soft
+    **color palette** to create quick visual groupings.
+
+  * Double-click a card to mark it as a
+    **nucleus**, highlighting the most critical ideas.
+
+* **Relationship Mapping**:
+
+  * Long-press anywhere on a card to start a connector, then release over another card to describe the relationship between them.
+
+  * Edit connectors by clicking their labels, or remove them via the context menu.
+
+* **Session Management**:
+
+  * Persist your progress locally with **Save Session** and restore it later with **Load Session**.
+
+  * Capture a **high-resolution screenshot** of the current board (powered by [html2canvas](https://html2canvas.hertzen.com/)).
 
 * **Advanced Exporting**:
-  
-  * Generate detailed reports from your cards using the export dialog.
-  
-  * **Filter** exports by specific tags or colors to create targeted summaries.
-  
-  * Export in multiple formats:
-    **Markdown, HTML, or JSON**.
 
-  * Save Session
- 
-  * Save Screenshot (thanks to [html2canvas](https://html2canvas.hertzen.com/))
+  * Generate detailed reports from your board using the export dialog.
+
+  * **Filter** exports by specific tags or card colors to craft targeted summaries.
+
+  * Export in multiple formats:
+    **Markdown, HTML, or JSON**, including connector data when relevant.
 
 * * *
 
@@ -46,6 +54,13 @@ How to Use
 ----------
 
 No installation or build process is required. Simply open the `index.html` file in any modern web browser to start using the application.
+
+Once the page loads:
+
+1. Click **Add Card** to drop a new idea on the canvas, then click the text to edit it.
+2. Drag cards with the grip icon in the upper-left corner to rearrange your board.
+3. Long-press on a card body to start drawing a connector, release over another card, and choose a relationship description.
+4. Use **Save Session** / **Load Session** to preserve progress, **Save Screenshot** for quick sharing, and **Export Report** to generate Markdown, HTML, or JSON summaries filtered by tags or colors.
 
 * * *
 
