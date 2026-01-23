@@ -545,7 +545,9 @@ const CardUI = (() => {
                 target.closest('.drag-handle') ||
                 target.closest('.delete-btn') ||
                 target.closest('.color-palette') ||
-                target.closest('.tag')
+                target.closest('.tag') ||
+                target.closest('.card-title') ||
+                target.closest('.card-blurb')
             );
         }
 
