@@ -25,13 +25,49 @@ body {
 .card {
     position: absolute;
     width: 190px;
-    padding: 12px;
+    padding: 0;
     background: #fff;
     border: 2px solid #ccc;
     border-radius: 8px;
-    cursor: grab;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     z-index: 1;
+}
+
+.card .drag-bar {
+    width: 100%;
+    height: 24px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.06) 100%);
+    border-radius: 6px 6px 0 0;
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    box-sizing: border-box;
+}
+
+.card .drag-bar:hover {
+    background: linear-gradient(180deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.1) 100%);
+}
+
+.card .drag-bar::before,
+.card .drag-bar::after {
+    content: '';
+    width: calc(100% - 16px);
+    height: 2px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 1px;
+}
+
+.card .drag-bar:hover::before,
+.card .drag-bar:hover::after {
+    background: rgba(0,0,0,0.25);
+}
+
+.card .card-content {
+    padding: 12px;
 }
 
 .card .card-title {
@@ -106,22 +142,9 @@ body {
     font-size: 0.8em;
 }
 
-.card .drag-handle {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    cursor: grab;
-    font-size: 20px;
-    color: #cccccc;
-}
-
-.card .drag-handle:hover {
-    color: #888888;
-}
-
 .card .delete-btn {
     position: absolute;
-    top: 5px;
+    top: 29px;
     left: 8px;
     cursor: pointer;
     font-size: 22px;

@@ -399,15 +399,24 @@ const CardUI = (() => {
 
         let suppressClick = false;
 
+        const dragBar = document.createElement("div");
+        dragBar.classList.add("drag-bar");
+        dragBar.style.touchAction = 'none';
+        div.appendChild(dragBar);
+
+        const cardContent = document.createElement("div");
+        cardContent.classList.add("card-content");
+        div.appendChild(cardContent);
+
         const titleDiv = document.createElement("div");
         titleDiv.classList.add("card-title");
         titleDiv.textContent = card.title;
-        div.appendChild(titleDiv);
+        cardContent.appendChild(titleDiv);
 
         const blurbDiv = document.createElement("div");
         blurbDiv.classList.add("card-blurb");
         blurbDiv.textContent = card.blurb;
-        div.appendChild(blurbDiv);
+        cardContent.appendChild(blurbDiv);
 
         titleDiv.addEventListener("click", () => {
             if (suppressClick) return;
@@ -425,22 +434,16 @@ const CardUI = (() => {
         });
 
         div.addEventListener("dblclick", (e) => {
-            if (e.target === div) {
+            if (e.target === div || e.target === cardContent) {
                 card.nucleus = !card.nucleus;
                 div.classList.toggle("nucleus");
             }
         });
 
-        const dragHandle = document.createElement("div");
-        dragHandle.classList.add("drag-handle");
-        dragHandle.innerHTML = "⠿";
-        dragHandle.style.touchAction = 'none';
-        div.appendChild(dragHandle);
-
         const deleteBtn = document.createElement("div");
         deleteBtn.classList.add("delete-btn");
         deleteBtn.innerHTML = "&times;";
-        div.appendChild(deleteBtn);
+        cardContent.appendChild(deleteBtn);
 
         deleteBtn.addEventListener("click", () => {
             if (confirm("Are you sure you want to permanently delete this card?")) {
@@ -454,7 +457,7 @@ const CardUI = (() => {
         let offsetX = 0;
         let offsetY = 0;
 
-        dragHandle.addEventListener('pointerdown', (event) => {
+        dragBar.addEventListener('pointerdown', (event) => {
             if (event.button !== undefined && event.button !== 0) return;
             cancelActiveConnection();
             dragging = true;
@@ -462,12 +465,12 @@ const CardUI = (() => {
             const rect = div.getBoundingClientRect();
             offsetX = event.clientX - rect.left;
             offsetY = event.clientY - rect.top;
-            div.style.cursor = "grabbing";
-            dragHandle.setPointerCapture(dragPointerId);
+            dragBar.style.cursor = "grabbing";
+            dragBar.setPointerCapture(dragPointerId);
             event.preventDefault();
         });
 
-        dragHandle.addEventListener('pointermove', (event) => {
+        dragBar.addEventListener('pointermove', (event) => {
             if (!dragging || event.pointerId !== dragPointerId) return;
             const containerRect = getContainerRect();
             card.x = event.clientX - containerRect.left - offsetX;
@@ -480,16 +483,16 @@ const CardUI = (() => {
         function endDrag(event) {
             if (event.pointerId !== dragPointerId) return;
             dragging = false;
-            div.style.cursor = "grab";
-            if (dragHandle.hasPointerCapture(dragPointerId)) {
-                dragHandle.releasePointerCapture(dragPointerId);
+            dragBar.style.cursor = "grab";
+            if (dragBar.hasPointerCapture(dragPointerId)) {
+                dragBar.releasePointerCapture(dragPointerId);
             }
             dragPointerId = null;
             renderConnections();
         }
 
-        dragHandle.addEventListener('pointerup', endDrag);
-        dragHandle.addEventListener('pointercancel', endDrag);
+        dragBar.addEventListener('pointerup', endDrag);
+        dragBar.addEventListener('pointercancel', endDrag);
 
         const colors = ['#ffffff', '#fff0f0', '#f0faff', '#f5f5dc', '#f0fff0', '#fff9e6', '#ffe6f0', '#e6e6ff', '#ffe6d9', '#e6fff9', '#f9e6ff', '#ffffcc', '#ffd9e6', '#e6f9ff'];
         const palette = document.createElement('div');
@@ -514,18 +517,18 @@ const CardUI = (() => {
             palette.appendChild(swatch);
         });
 
-        div.appendChild(palette);
+        cardContent.appendChild(palette);
 
         const connectionPad = document.createElement('div');
         connectionPad.classList.add('connection-pad');
         connectionPad.setAttribute('role', 'button');
         connectionPad.setAttribute('aria-label', 'Hold to start connecting this card to another');
         connectionPad.innerHTML = '<span class="connection-pad-icon">⤳</span><span class="connection-pad-text">Hold to connect</span>';
-        div.appendChild(connectionPad);
+        cardContent.appendChild(connectionPad);
 
         const tagContainer = document.createElement("div");
         tagContainer.classList.add("tags");
-        div.appendChild(tagContainer);
+        cardContent.appendChild(tagContainer);
 
         function updateTagDisplay() {
             tagContainer.innerHTML = "";
@@ -570,7 +573,7 @@ const CardUI = (() => {
 
         function shouldIgnoreConnectionStart(target) {
             return Boolean(
-                target.closest('.drag-handle') ||
+                target.closest('.drag-bar') ||
                 target.closest('.delete-btn') ||
                 target.closest('.color-palette') ||
                 target.closest('.tag') ||
