@@ -1,3 +1,11 @@
+This is a fork of [cards](https://github.com/bertjerred/cards) by [@bertjerred](https://github.com/bertjerred). A huge thanks to him for the fantastic original!
+
+This fork adds some new features, that are outlined in CHANGELOG.md.
+
+Original README.md follows:
+
+---
+
 Cards: A Simple Browser-Based Brainstorming Tool
 ================================================
 
