@@ -2,6 +2,8 @@ This is a fork of [cards](https://github.com/bertjerred/cards) by [@bertjerred](
 
 This fork adds some new features, that are outlined in CHANGELOG.md.
 
+AI Note: I have used Claude Code to make several of these changes.
+
 Original README.md follows:
 
 ---
