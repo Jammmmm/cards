@@ -18,7 +18,7 @@ body {
     width: 100%;
     height: calc(100vh - 50px);
     background: #fffbe6;
-    overflow: hidden;
+    overflow: auto;
 }
 
 /* --- Card Component --- */
