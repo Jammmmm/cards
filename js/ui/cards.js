@@ -491,7 +491,7 @@ const CardUI = (() => {
         dragHandle.addEventListener('pointerup', endDrag);
         dragHandle.addEventListener('pointercancel', endDrag);
 
-        const colors = ['#ffffff', '#fff0f0', '#f0faff', '#f5f5dc', '#f0fff0'];
+        const colors = ['#ffffff', '#fff0f0', '#f0faff', '#f5f5dc', '#f0fff0', '#fff9e6', '#ffe6f0', '#e6e6ff', '#ffe6d9', '#e6fff9', '#f9e6ff', '#ffffcc', '#ffd9e6', '#e6f9ff'];
         const palette = document.createElement('div');
         palette.classList.add('color-palette');
 
