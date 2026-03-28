@@ -21,23 +21,23 @@
     <div id="export-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <h2>Export Options</h2>
-            
+
             <label for="report-title">Report Title</label>
             <input type="text" id="report-title" placeholder="e.g., My Brainstorm Session">
-            
+
             <label>Export Format</label>
             <div id="format-options">
                 <label><input type="radio" name="format" value="md"> Markdown (.md)</label>
                 <label><input type="radio" name="format" value="html" checked> HTML (.html)</label>
                 <label><input type="radio" name="format" value="json"> JSON (.json)</label>
             </div>
-            
+
             <div class="filter-section">
                 <label>Filter by Tags</label>
                 <div id="tag-filters" class="filter-container">
                     </div>
             </div>
-            
+
             <div class="filter-section">
                 <label>Filter by Colors</label>
                 <div id="color-filters" class="filter-container">
@@ -47,6 +47,20 @@
             <div class="modal-actions">
                 <button id="cancel-export">Cancel</button>
                 <button id="confirm-export">Export</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="blurb-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Edit Blurb</h2>
+
+            <label for="blurb-textarea">Blurb Text</label>
+            <textarea id="blurb-textarea" placeholder="Enter blurb text..."></textarea>
+
+            <div class="modal-actions">
+                <button id="cancel-blurb">Cancel</button>
+                <button id="confirm-blurb">Save</button>
             </div>
         </div>
     </div>

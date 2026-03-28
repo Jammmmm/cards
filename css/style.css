@@ -53,6 +53,8 @@ body {
     font-size: 0.9em;
     min-height: 20px;
     cursor: pointer;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .card .connection-pad {
@@ -280,6 +282,18 @@ body {
     box-sizing: border-box;
     border: 1px solid #ccc;
     border-radius: 4px;
+}
+
+.modal-content textarea {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: sans-serif;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 120px;
 }
 
 #format-options {

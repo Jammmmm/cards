@@ -16,6 +16,14 @@ const CardUI = (() => {
     let activeConnection = null;
     const cardElements = new Map();
 
+    // Blurb modal elements
+    const blurbModal = document.getElementById('blurb-modal');
+    const blurbTextarea = document.getElementById('blurb-textarea');
+    const cancelBlurbBtn = document.getElementById('cancel-blurb');
+    const confirmBlurbBtn = document.getElementById('confirm-blurb');
+    let currentBlurbCard = null;
+    let currentBlurbDiv = null;
+
     function ensureConnectionLayer() {
         if (!connectionLayer) {
             connectionLayer = document.createElementNS(svgNS, 'svg');
@@ -29,6 +37,30 @@ const CardUI = (() => {
         connectionLayer.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
 
         return connectionLayer;
+    }
+
+    function openBlurbModal(card, blurbDiv) {
+        currentBlurbCard = card;
+        currentBlurbDiv = blurbDiv;
+        blurbTextarea.value = card.blurb;
+        blurbModal.style.display = 'flex';
+        blurbTextarea.focus();
+        blurbTextarea.select();
+    }
+
+    function closeBlurbModal() {
+        blurbModal.style.display = 'none';
+        currentBlurbCard = null;
+        currentBlurbDiv = null;
+        blurbTextarea.value = '';
+    }
+
+    function saveBlurb() {
+        if (currentBlurbCard && currentBlurbDiv) {
+            currentBlurbCard.blurb = blurbTextarea.value;
+            currentBlurbDiv.textContent = blurbTextarea.value;
+        }
+        closeBlurbModal();
     }
 
     function getContainerRect() {
@@ -389,11 +421,7 @@ const CardUI = (() => {
 
         blurbDiv.addEventListener("click", () => {
             if (suppressClick) return;
-            const newBlurb = prompt("Edit Blurb:", card.blurb);
-            if (newBlurb !== null) {
-                card.blurb = newBlurb;
-                blurbDiv.textContent = newBlurb;
-            }
+            openBlurbModal(card, blurbDiv);
         });
 
         div.addEventListener("dblclick", (e) => {
@@ -656,6 +684,25 @@ const CardUI = (() => {
     window.addEventListener('resize', () => {
         if (container.childElementCount === 0) return;
         renderConnections();
+    });
+
+    // Blurb modal event listeners
+    cancelBlurbBtn.addEventListener('click', closeBlurbModal);
+    confirmBlurbBtn.addEventListener('click', saveBlurb);
+
+    // Close modal on overlay click
+    blurbModal.addEventListener('click', (e) => {
+        if (e.target === blurbModal) {
+            closeBlurbModal();
+        }
+    });
+
+    // Handle Enter key with Ctrl/Cmd to save
+    blurbTextarea.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            saveBlurb();
+        }
     });
 
     return { render };
