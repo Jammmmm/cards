@@ -40,6 +40,8 @@ const CardModel = (() => {
             blurb,
             x: 50,
             y: 50,
+            width: 190,
+            height: 'auto',
             tags: [],
             nucleus: false,
             color: '#ffffff'

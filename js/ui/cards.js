@@ -394,6 +394,15 @@ const CardUI = (() => {
         div.style.left = card.x + "px";
         div.style.top = card.y + "px";
         div.style.backgroundColor = card.color;
+
+        // Apply width and height
+        if (card.width) {
+            div.style.width = typeof card.width === 'number' ? card.width + "px" : card.width;
+        }
+        if (card.height && card.height !== 'auto') {
+            div.style.height = typeof card.height === 'number' ? card.height + "px" : card.height;
+        }
+
         div.dataset.cardId = card.id;
         cardElements.set(card.id, div);
 
@@ -578,7 +587,8 @@ const CardUI = (() => {
                 target.closest('.color-palette') ||
                 target.closest('.tag') ||
                 target.closest('.card-title') ||
-                target.closest('.card-blurb')
+                target.closest('.card-blurb') ||
+                target.closest('.resize-handle')
             );
         }
 
@@ -669,6 +679,59 @@ const CardUI = (() => {
 
         div.addEventListener('pointerup', (event) => endConnectionSequence(event));
         div.addEventListener('pointercancel', (event) => endConnectionSequence(event, true));
+
+        // Resize handle
+        const resizeHandle = document.createElement('div');
+        resizeHandle.classList.add('resize-handle');
+        resizeHandle.style.touchAction = 'none';
+        div.appendChild(resizeHandle);
+
+        let resizing = false;
+        let resizePointerId = null;
+        let startWidth = 0;
+        let startHeight = 0;
+        let startX = 0;
+        let startY = 0;
+
+        resizeHandle.addEventListener('pointerdown', (event) => {
+            if (event.button !== undefined && event.button !== 0) return;
+            event.stopPropagation();
+            cancelActiveConnection();
+            resizing = true;
+            resizePointerId = event.pointerId;
+            startX = event.clientX;
+            startY = event.clientY;
+            startWidth = div.offsetWidth;
+            startHeight = div.offsetHeight;
+            resizeHandle.setPointerCapture(resizePointerId);
+            event.preventDefault();
+        });
+
+        resizeHandle.addEventListener('pointermove', (event) => {
+            if (!resizing || event.pointerId !== resizePointerId) return;
+            const deltaX = event.clientX - startX;
+            const deltaY = event.clientY - startY;
+            const newWidth = Math.max(150, startWidth + deltaX);
+            const newHeight = Math.max(100, startHeight + deltaY);
+            div.style.width = newWidth + "px";
+            div.style.height = newHeight + "px";
+            card.width = newWidth;
+            card.height = newHeight;
+            renderConnections();
+        });
+
+        function endResize(event) {
+            if (event.pointerId !== resizePointerId) return;
+            resizing = false;
+            if (resizeHandle.hasPointerCapture(resizePointerId)) {
+                resizeHandle.releasePointerCapture(resizePointerId);
+            }
+            resizePointerId = null;
+            renderConnections();
+        }
+
+        resizeHandle.addEventListener('pointerup', endResize);
+        resizeHandle.addEventListener('pointercancel', endResize);
 
         container.appendChild(div);
     }

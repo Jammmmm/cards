@@ -25,6 +25,8 @@ body {
 .card {
     position: absolute;
     width: 190px;
+    min-width: 150px;
+    min-height: 100px;
     padding: 0;
     background: #fff;
     border: 2px solid #ccc;
@@ -155,6 +157,32 @@ body {
 
 .card .delete-btn:hover {
     color: #e74c3c; /* Red on hover */
+}
+
+.card .resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    z-index: 10;
+}
+
+.card .resize-handle::before {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 12px 12px;
+    border-color: transparent transparent rgba(0,0,0,0.2) transparent;
+}
+
+.card .resize-handle:hover::before {
+    border-color: transparent transparent rgba(0,0,0,0.4) transparent;
 }
 
 /* --- Tag Component --- */
