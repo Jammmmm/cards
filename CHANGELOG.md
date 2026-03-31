@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.3] - 2026-03-31
+
+ - Added Options to allow defaults to be set.
+ - Fixed resizing of cards to no longer hide contents when they overflow.
+
 ## [1.1.2] - 2026-03-30
 
  - Display is now mobile/low-resolution friendly.
