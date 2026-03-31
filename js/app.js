@@ -64,4 +64,12 @@ document.getElementById("session-title").addEventListener("input", (event) => {
     CardModel.setSessionTitle(event.target.value);
 });
 
+document.getElementById("about-btn").addEventListener("click", () => {
+    document.getElementById("about-modal").style.display = "flex";
+});
+
+document.getElementById("close-about").addEventListener("click", () => {
+    document.getElementById("about-modal").style.display = "none";
+});
+
 CardUI.render();

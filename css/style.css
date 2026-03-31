@@ -356,6 +356,24 @@ body {
     min-height: 120px;
 }
 
+.modal-content.about-modal {
+    text-align: center;
+}
+
+.modal-content.about-modal p {
+    margin: 10px 0;
+}
+
+.modal-content.about-modal a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.modal-content.about-modal a:hover {
+    text-decoration: underline;
+}
+
 #format-options {
     display: flex;
     gap: 15px;
