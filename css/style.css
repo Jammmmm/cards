@@ -376,6 +376,22 @@ button:hover {
     margin: 10px 0;
 }
 
+.modal-content.about-modal p.about-credit {
+    margin-top: 20px;
+}
+
+.about-github-link {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: auto;
+}
+
+.about-github-link:hover {
+    text-decoration: underline;
+}
+
 .modal-content.about-modal a {
     color: #3498db;
     text-decoration: none;
