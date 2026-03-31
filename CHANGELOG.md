@@ -9,7 +9,8 @@
  - Changed the mouse pointer on button hover.
  - Added a bottom border to the toolbar.
  - Rearranged toolbar buttons and added dividers to indicate sections.
- - Add a New button to start a new session.
+ - Added a New button to start a new session.
+ - Added persisting of the session so the browser window can be closed and the session is restored when the page is loaded again.
 
 ## [1.1.0] - 2026-03-27
 
