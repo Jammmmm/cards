@@ -24,6 +24,7 @@
         <button id="export-json">Export Report</button>
         <button id="save-screenshot">Save Screenshot</button>
         <div class="toolbar-divider"></div>
+        <button id="options-btn">Options</button>
         <button id="about-btn">About</button>
     </div>
 
@@ -72,6 +73,26 @@
             <div class="modal-actions">
                 <button id="cancel-blurb">Cancel</button>
                 <button id="confirm-blurb">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="options-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Options</h2>
+
+            <label for="default-card-title">Default Card Title</label>
+            <input type="text" id="default-card-title" placeholder="New Title">
+
+            <label for="default-card-blurb">Default Card Blurb</label>
+            <textarea id="default-card-blurb" placeholder="Click to edit..."></textarea>
+
+            <label>Default Card Color</label>
+            <div id="default-color-palette" class="color-palette"></div>
+
+            <div class="modal-actions">
+                <button id="cancel-options">Cancel</button>
+                <button id="confirm-options">Save</button>
             </div>
         </div>
     </div>

@@ -5,6 +5,9 @@ const CardModel = (() => {
     let connectorIdCounter = 1;
     let sessionTitle = '';
     let zoom = 1;
+    let defaultCardTitle = "New Title";
+    let defaultCardBlurb = "Click to edit...";
+    let defaultCardColor = '#ffffff';
 
     function normalizeEndpoint(endpoint, fallbackType = 'card') {
         if (endpoint && typeof endpoint === 'object' && 'id' in endpoint) {
@@ -35,7 +38,7 @@ const CardModel = (() => {
         return { x: position.x, y: position.y };
     }
 
-    function addCard(title = "New Title", blurb = "Click to edit...") {
+    function addCard(title = defaultCardTitle, blurb = defaultCardBlurb) {
         const card = {
             id: idCounter++,
             title,
@@ -46,7 +49,7 @@ const CardModel = (() => {
             height: 'auto',
             tags: [],
             nucleus: false,
-            color: '#ffffff'
+            color: defaultCardColor
         };
         cards.push(card);
         return card;
@@ -151,7 +154,10 @@ const CardModel = (() => {
             title: sessionTitle,
             zoom,
             cards: JSON.parse(JSON.stringify(cards)),
-            connectors: JSON.parse(JSON.stringify(connectors))
+            connectors: JSON.parse(JSON.stringify(connectors)),
+            defaultCardTitle,
+            defaultCardBlurb,
+            defaultCardColor
         };
     }
 
@@ -165,6 +171,9 @@ const CardModel = (() => {
             cards = loadedData.cards;
             sessionTitle = loadedData.title || '';
             zoom = (typeof loadedData.zoom === 'number' && loadedData.zoom > 0) ? loadedData.zoom : 1;
+            defaultCardTitle = loadedData.defaultCardTitle || "New Title";
+            defaultCardBlurb = loadedData.defaultCardBlurb || "Click to edit...";
+            defaultCardColor = loadedData.defaultCardColor || '#ffffff';
             const cardIds = new Set(cards.map(card => card.id));
             if (Array.isArray(loadedData.connectors)) {
                 const seen = new Set();
@@ -299,6 +308,16 @@ const CardModel = (() => {
         zoom = Math.round(Math.min(3, Math.max(0.10, value)) * 100) / 100;
     }
 
+    function setCardDefaults(title, blurb, color) {
+        defaultCardTitle = title || "New Title";
+        defaultCardBlurb = blurb || "Click to edit...";
+        defaultCardColor = color || '#ffffff';
+    }
+
+    function getCardDefaults() {
+        return { title: defaultCardTitle, blurb: defaultCardBlurb, color: defaultCardColor };
+    }
+
     function persist() {
         localStorage.setItem('cards-session', JSON.stringify(getState()));
     }
@@ -334,6 +353,8 @@ const CardModel = (() => {
         getZoom,
         setZoom,
         persist,
-        loadFromStorage
+        loadFromStorage,
+        setCardDefaults,
+        getCardDefaults
     };
 })();

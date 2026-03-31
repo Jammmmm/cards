@@ -89,6 +89,53 @@ document.getElementById("zoom-display").addEventListener("change", (event) => {
     if (!isNaN(val)) CardUI.setZoom(val / 100);
 });
 
+const CARD_COLORS = ['#ffffff', '#fff0f0', '#f0faff', '#f5f5dc', '#f0fff0', '#fff9e6', '#ffe6f0', '#e6e6ff', '#ffe6d9', '#e6fff9', '#f9e6ff', '#ffffcc', '#ffd9e6', '#e6f9ff'];
+
+document.getElementById("options-btn").addEventListener("click", () => {
+    const defaults = CardModel.getCardDefaults();
+    document.getElementById("default-card-title").value = defaults.title;
+    document.getElementById("default-card-blurb").value = defaults.blurb;
+
+    const palette = document.getElementById("default-color-palette");
+    palette.innerHTML = '';
+    CARD_COLORS.forEach(color => {
+        const swatch = document.createElement('div');
+        swatch.classList.add('color-swatch');
+        swatch.style.backgroundColor = color;
+        swatch.dataset.color = color;
+        if (color === defaults.color) {
+            swatch.classList.add('selected');
+        }
+        swatch.addEventListener('click', () => {
+            palette.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+            swatch.classList.add('selected');
+        });
+        palette.appendChild(swatch);
+    });
+
+    document.getElementById("options-modal").style.display = "flex";
+});
+
+document.getElementById("cancel-options").addEventListener("click", () => {
+    document.getElementById("options-modal").style.display = "none";
+});
+
+document.getElementById("confirm-options").addEventListener("click", () => {
+    const title = document.getElementById("default-card-title").value;
+    const blurb = document.getElementById("default-card-blurb").value;
+    const selectedSwatch = document.querySelector("#default-color-palette .color-swatch.selected");
+    const color = selectedSwatch ? selectedSwatch.dataset.color : '#ffffff';
+    CardModel.setCardDefaults(title, blurb, color);
+    CardModel.persist();
+    document.getElementById("options-modal").style.display = "none";
+});
+
+document.getElementById("options-modal").addEventListener("click", (e) => {
+    if (e.target === document.getElementById("options-modal")) {
+        document.getElementById("options-modal").style.display = "none";
+    }
+});
+
 document.getElementById("about-btn").addEventListener("click", () => {
     document.getElementById("about-modal").style.display = "flex";
 });
