@@ -3,6 +3,7 @@ const CardModel = (() => {
     let connectors = [];
     let idCounter = 1;
     let connectorIdCounter = 1;
+    let sessionTitle = '';
 
     function normalizeEndpoint(endpoint, fallbackType = 'card') {
         if (endpoint && typeof endpoint === 'object' && 'id' in endpoint) {
@@ -146,6 +147,7 @@ const CardModel = (() => {
 
     function getState() {
         return {
+            title: sessionTitle,
             cards: JSON.parse(JSON.stringify(cards)),
             connectors: JSON.parse(JSON.stringify(connectors))
         };
@@ -155,8 +157,10 @@ const CardModel = (() => {
         if (Array.isArray(loadedData)) {
             cards = loadedData;
             connectors = [];
+            sessionTitle = '';
         } else if (loadedData && Array.isArray(loadedData.cards)) {
             cards = loadedData.cards;
+            sessionTitle = loadedData.title || '';
             const cardIds = new Set(cards.map(card => card.id));
             if (Array.isArray(loadedData.connectors)) {
                 const seen = new Set();
@@ -275,6 +279,14 @@ const CardModel = (() => {
         }
     }
 
+    function getSessionTitle() {
+        return sessionTitle;
+    }
+
+    function setSessionTitle(title) {
+        sessionTitle = title || '';
+    }
+
     return {
         addCard,
         updateCard,
@@ -288,6 +300,8 @@ const CardModel = (() => {
         getConnector,
         getState,
         loadCards,
-        deleteCard
+        deleteCard,
+        getSessionTitle,
+        setSessionTitle
     };
 })();

@@ -33,6 +33,11 @@ const CardExport = (() => {
             colorContainer.appendChild(swatch);
         });
 
+        const sessionTitle = CardModel.getSessionTitle();
+        if (sessionTitle) {
+            document.getElementById('report-title').value = sessionTitle;
+        }
+
         modal.style.display = 'flex';
     }
 

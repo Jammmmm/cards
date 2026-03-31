@@ -48,6 +48,7 @@ document.getElementById("load-session-input").addEventListener("change", (event)
         try {
             const loadedData = JSON.parse(e.target.result);
             CardModel.loadCards(loadedData);
+            document.getElementById("session-title").value = CardModel.getSessionTitle();
             CardUI.render();
         } catch (error) {
             alert("Error: Could not parse the session file.");
@@ -55,7 +56,12 @@ document.getElementById("load-session-input").addEventListener("change", (event)
         }
     };
     reader.readAsText(file);
-    
-    event.target.value = ''; 
+
+    event.target.value = '';
 });
+
+document.getElementById("session-title").addEventListener("input", (event) => {
+    CardModel.setSessionTitle(event.target.value);
+});
+
 CardUI.render();
