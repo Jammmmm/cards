@@ -4,6 +4,7 @@ const CardModel = (() => {
     let idCounter = 1;
     let connectorIdCounter = 1;
     let sessionTitle = '';
+    let zoom = 1;
 
     function normalizeEndpoint(endpoint, fallbackType = 'card') {
         if (endpoint && typeof endpoint === 'object' && 'id' in endpoint) {
@@ -148,6 +149,7 @@ const CardModel = (() => {
     function getState() {
         return {
             title: sessionTitle,
+            zoom,
             cards: JSON.parse(JSON.stringify(cards)),
             connectors: JSON.parse(JSON.stringify(connectors))
         };
@@ -158,9 +160,11 @@ const CardModel = (() => {
             cards = loadedData;
             connectors = [];
             sessionTitle = '';
+            zoom = 1;
         } else if (loadedData && Array.isArray(loadedData.cards)) {
             cards = loadedData.cards;
             sessionTitle = loadedData.title || '';
+            zoom = (typeof loadedData.zoom === 'number' && loadedData.zoom > 0) ? loadedData.zoom : 1;
             const cardIds = new Set(cards.map(card => card.id));
             if (Array.isArray(loadedData.connectors)) {
                 const seen = new Set();
@@ -287,6 +291,14 @@ const CardModel = (() => {
         sessionTitle = title || '';
     }
 
+    function getZoom() {
+        return zoom;
+    }
+
+    function setZoom(value) {
+        zoom = Math.round(Math.min(3, Math.max(0.10, value)) * 100) / 100;
+    }
+
     function persist() {
         localStorage.setItem('cards-session', JSON.stringify(getState()));
     }
@@ -319,6 +331,8 @@ const CardModel = (() => {
         deleteCard,
         getSessionTitle,
         setSessionTitle,
+        getZoom,
+        setZoom,
         persist,
         loadFromStorage
     };

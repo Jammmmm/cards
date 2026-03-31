@@ -76,6 +76,19 @@ document.getElementById("session-title").addEventListener("input", (event) => {
     CardModel.persist();
 });
 
+document.getElementById("zoom-out").addEventListener("click", () => {
+    CardUI.setZoom(CardUI.getZoom() - 0.1);
+});
+
+document.getElementById("zoom-in").addEventListener("click", () => {
+    CardUI.setZoom(CardUI.getZoom() + 0.1);
+});
+
+document.getElementById("zoom-display").addEventListener("change", (event) => {
+    const val = parseInt(event.target.value, 10);
+    if (!isNaN(val)) CardUI.setZoom(val / 100);
+});
+
 document.getElementById("about-btn").addEventListener("click", () => {
     document.getElementById("about-modal").style.display = "flex";
 });

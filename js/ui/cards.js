@@ -16,6 +16,28 @@ const CardUI = (() => {
     let activeConnection = null;
     const cardElements = new Map();
 
+    let zoom = 1;
+    let scaleWrapper = null;
+
+    function getZoom() { return zoom; }
+
+    function applyZoom() {
+        if (!scaleWrapper) return;
+        scaleWrapper.style.transform = `scale(${zoom})`;
+        scaleWrapper.style.width = `${100 / zoom}%`;
+        scaleWrapper.style.height = `${100 / zoom}%`;
+    }
+
+    function setZoom(newZoom, skipPersist = false) {
+        CardModel.setZoom(newZoom);
+        zoom = CardModel.getZoom();
+        applyZoom();
+        renderConnections();
+        const display = document.getElementById('zoom-display');
+        if (display) display.value = Math.round(zoom * 100);
+        if (!skipPersist) CardModel.persist();
+    }
+
     // Blurb modal elements
     const blurbModal = document.getElementById('blurb-modal');
     const blurbTextarea = document.getElementById('blurb-textarea');
@@ -24,17 +46,31 @@ const CardUI = (() => {
     let currentBlurbCard = null;
     let currentBlurbDiv = null;
 
+    function ensureScaleWrapper() {
+        if (!scaleWrapper) {
+            scaleWrapper = document.createElement('div');
+            scaleWrapper.id = 'scale-wrapper';
+            scaleWrapper.style.transformOrigin = 'top left';
+            container.appendChild(scaleWrapper);
+            applyZoom();
+        }
+        return scaleWrapper;
+    }
+
     function ensureConnectionLayer() {
+        ensureScaleWrapper();
         if (!connectionLayer) {
             connectionLayer = document.createElementNS(svgNS, 'svg');
             connectionLayer.classList.add('connection-layer');
-            container.appendChild(connectionLayer);
+            scaleWrapper.appendChild(connectionLayer);
         }
 
-        const rect = container.getBoundingClientRect();
-        connectionLayer.setAttribute('width', rect.width);
-        connectionLayer.setAttribute('height', rect.height);
-        connectionLayer.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+        const rect = scaleWrapper.getBoundingClientRect();
+        const logicalW = rect.width / zoom;
+        const logicalH = rect.height / zoom;
+        connectionLayer.setAttribute('width', logicalW);
+        connectionLayer.setAttribute('height', logicalH);
+        connectionLayer.setAttribute('viewBox', `0 0 ${logicalW} ${logicalH}`);
 
         return connectionLayer;
     }
@@ -71,11 +107,11 @@ const CardUI = (() => {
     function getCardCenter(cardId) {
         const el = cardElements.get(cardId);
         if (!el) return null;
-        const containerRect = getContainerRect();
+        const wrapperRect = scaleWrapper ? scaleWrapper.getBoundingClientRect() : getContainerRect();
         const rect = el.getBoundingClientRect();
         return {
-            x: rect.left - containerRect.left + rect.width / 2,
-            y: rect.top - containerRect.top + rect.height / 2
+            x: (rect.left - wrapperRect.left) / zoom + (rect.width / zoom) / 2,
+            y: (rect.top - wrapperRect.top) / zoom + (rect.height / zoom) / 2
         };
     }
 
@@ -337,10 +373,10 @@ const CardUI = (() => {
 
     function updateConnectionDrag(pointerEvent) {
         if (!activeConnection || !tempConnectionPath) return;
-        const containerRect = getContainerRect();
+        const wrapperRect = scaleWrapper ? scaleWrapper.getBoundingClientRect() : getContainerRect();
         const end = {
-            x: pointerEvent.clientX - containerRect.left,
-            y: pointerEvent.clientY - containerRect.top
+            x: (pointerEvent.clientX - wrapperRect.left) / zoom,
+            y: (pointerEvent.clientY - wrapperRect.top) / zoom
         };
         const start = getEndpointCenter(activeConnection.from) || activeConnection.start;
         const control = computeControlPoint(start, end);
@@ -479,8 +515,8 @@ const CardUI = (() => {
             dragging = true;
             dragPointerId = event.pointerId;
             const rect = div.getBoundingClientRect();
-            offsetX = event.clientX - rect.left;
-            offsetY = event.clientY - rect.top;
+            offsetX = (event.clientX - rect.left) / zoom;
+            offsetY = (event.clientY - rect.top) / zoom;
             dragBar.style.cursor = "grabbing";
             dragBar.setPointerCapture(dragPointerId);
             event.preventDefault();
@@ -488,9 +524,9 @@ const CardUI = (() => {
 
         dragBar.addEventListener('pointermove', (event) => {
             if (!dragging || event.pointerId !== dragPointerId) return;
-            const containerRect = getContainerRect();
-            card.x = event.clientX - containerRect.left - offsetX;
-            card.y = event.clientY - containerRect.top - offsetY;
+            const wrapperRect = scaleWrapper ? scaleWrapper.getBoundingClientRect() : getContainerRect();
+            card.x = (event.clientX - wrapperRect.left) / zoom - offsetX;
+            card.y = (event.clientY - wrapperRect.top) / zoom - offsetY;
             div.style.left = card.x + "px";
             div.style.top = card.y + "px";
             renderConnections();
@@ -745,18 +781,23 @@ const CardUI = (() => {
         resizeHandle.addEventListener('pointerup', endResize);
         resizeHandle.addEventListener('pointercancel', endResize);
 
-        container.appendChild(div);
+        scaleWrapper.appendChild(div);
     }
 
     function render() {
+        zoom = CardModel.getZoom();
         cardElements.clear();
         container.innerHTML = "";
         connectionLayer = null;
+        scaleWrapper = null;
         tempConnectionPath = null;
         activeConnection = null;
+        ensureScaleWrapper();
         ensureConnectionLayer();
         CardModel.getCards().forEach(createCardElement);
         renderConnections();
+        const display = document.getElementById('zoom-display');
+        if (display) display.value = Math.round(zoom * 100);
     }
 
     window.addEventListener('resize', () => {
@@ -783,5 +824,5 @@ const CardUI = (() => {
         }
     });
 
-    return { render };
+    return { render, setZoom, getZoom };
 })();

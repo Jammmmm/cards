@@ -15,6 +15,11 @@
         <div class="toolbar-divider"></div>
         <input type="text" id="session-title" placeholder="Title...">
         <button id="add-card">Add Card</button>
+        <div class="zoom-controls">
+            <button id="zoom-out" title="Zoom Out">−</button>
+            <input type="number" id="zoom-display" value="100" min="10" max="300" step="10" title="Zoom Level">
+            <button id="zoom-in" title="Zoom In">+</button>
+        </div>
         <div class="toolbar-divider"></div>
         <button id="export-json">Export Report</button>
         <button id="save-screenshot">Save Screenshot</button>
@@ -74,7 +79,7 @@
     <div id="about-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content about-modal">
             <h2>Cards</h2>
-            <p><strong>Version:</strong> 1.1.1</p>
+            <p><strong>Version:</strong> 1.1.2</p>
             <p>Virtual index cards for brainstorming</p>
             <p class="about-credit">Based on the <a href="https://github.com/bertjerred/cards" target="_blank" rel="noopener noreferrer">original</a> by <a href="https://github.com/bertjerred/" target="_blank" rel="noopener noreferrer">@bertjerred</a></p>
             <div class="modal-actions">

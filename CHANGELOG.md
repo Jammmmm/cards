@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.2] - 2026-03-30
+
+ - Display is now mobile/low-resolution friendly.
+ - Added zoom controls to zoom in/out, with persistence across sessions and loading/saving.
+
 ## [1.1.1] - 2026-03-30
 
  - Added ability to give a title to the session.
