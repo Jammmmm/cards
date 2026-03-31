@@ -5,6 +5,10 @@ body {
     padding: 0;
 }
 
+button:hover {
+    cursor: pointer;
+}
+
 /* --- Main Layout --- */
 #toolbar {
     padding: 10px;
