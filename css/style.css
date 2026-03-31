@@ -144,6 +144,7 @@ button:hover {
     border-bottom: 1px solid #eee;
     cursor: pointer;
     padding-left: 20px; /* Added to make room for the delete button */
+    min-height: 20px;
 }
 
 .card.nucleus {

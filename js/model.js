@@ -303,8 +303,8 @@ const CardModel = (() => {
     }
 
     function setCardDefaults(title, blurb, color) {
-        defaultCardTitle = title || "New Title";
-        defaultCardBlurb = blurb || "Click to edit...";
+        defaultCardTitle = title != null ? title : "New Title";
+        defaultCardBlurb = blurb != null ? blurb : "Click to edit...";
         defaultCardColor = color || '#ffffff';
         localStorage.setItem('cards-defaults', JSON.stringify({ defaultCardTitle, defaultCardBlurb, defaultCardColor }));
     }
@@ -322,8 +322,8 @@ const CardModel = (() => {
         if (savedDefaults) {
             try {
                 const d = JSON.parse(savedDefaults);
-                defaultCardTitle = d.defaultCardTitle || "New Title";
-                defaultCardBlurb = d.defaultCardBlurb || "Click to edit...";
+                defaultCardTitle = d.defaultCardTitle != null ? d.defaultCardTitle : "New Title";
+                defaultCardBlurb = d.defaultCardBlurb != null ? d.defaultCardBlurb : "Click to edit...";
                 defaultCardColor = d.defaultCardColor || '#ffffff';
             } catch (e) {
                 console.error('Failed to restore card defaults from localStorage:', e);
