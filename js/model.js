@@ -287,6 +287,22 @@ const CardModel = (() => {
         sessionTitle = title || '';
     }
 
+    function persist() {
+        localStorage.setItem('cards-session', JSON.stringify(getState()));
+    }
+
+    function loadFromStorage() {
+        const saved = localStorage.getItem('cards-session');
+        if (!saved) return false;
+        try {
+            loadCards(JSON.parse(saved));
+            return true;
+        } catch (e) {
+            console.error('Failed to restore session from localStorage:', e);
+            return false;
+        }
+    }
+
     return {
         addCard,
         updateCard,
@@ -302,6 +318,8 @@ const CardModel = (() => {
         loadCards,
         deleteCard,
         getSessionTitle,
-        setSessionTitle
+        setSessionTitle,
+        persist,
+        loadFromStorage
     };
 })();

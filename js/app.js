@@ -1,11 +1,13 @@
 document.getElementById("add-card").addEventListener("click", () => {
     CardModel.addCard();
+    CardModel.persist();
     CardUI.render();
 });
 
 document.getElementById("new-session").addEventListener("click", () => {
     if (confirm("Are you sure you want to start a new session? All current cards and connections will be lost.")) {
         CardModel.loadCards({ cards: [], connectors: [] });
+        CardModel.persist();
         document.getElementById("session-title").value = "";
         CardUI.render();
     }
@@ -56,6 +58,7 @@ document.getElementById("load-session-input").addEventListener("change", (event)
         try {
             const loadedData = JSON.parse(e.target.result);
             CardModel.loadCards(loadedData);
+            CardModel.persist();
             document.getElementById("session-title").value = CardModel.getSessionTitle();
             CardUI.render();
         } catch (error) {
@@ -70,6 +73,7 @@ document.getElementById("load-session-input").addEventListener("change", (event)
 
 document.getElementById("session-title").addEventListener("input", (event) => {
     CardModel.setSessionTitle(event.target.value);
+    CardModel.persist();
 });
 
 document.getElementById("about-btn").addEventListener("click", () => {
@@ -80,4 +84,7 @@ document.getElementById("close-about").addEventListener("click", () => {
     document.getElementById("about-modal").style.display = "none";
 });
 
+if (CardModel.loadFromStorage()) {
+    document.getElementById("session-title").value = CardModel.getSessionTitle();
+}
 CardUI.render();

@@ -59,6 +59,7 @@ const CardUI = (() => {
         if (currentBlurbCard && currentBlurbDiv) {
             currentBlurbCard.blurb = blurbTextarea.value;
             currentBlurbDiv.textContent = blurbTextarea.value;
+            CardModel.persist();
         }
         closeBlurbModal();
     }
@@ -146,12 +147,14 @@ const CardUI = (() => {
         if (newType === null) return;
         const trimmed = newType.trim();
         CardModel.updateConnector(connectorId, { type: trimmed || RELATION_SUGGESTIONS[0] });
+        CardModel.persist();
         renderConnections();
     }
 
     function deleteConnectorWithConfirm(connectorId) {
         if (!confirm('Delete this connector?')) return;
         CardModel.deleteConnector(connectorId);
+        CardModel.persist();
         renderConnections();
     }
 
@@ -371,6 +374,7 @@ const CardUI = (() => {
                 if (!created) {
                     alert('A connector with this relationship already exists between the selected items.');
                 }
+                CardModel.persist();
                 renderConnections();
             }
         }
@@ -433,6 +437,7 @@ const CardUI = (() => {
             if (newTitle !== null && newTitle.trim() !== "") {
                 card.title = newTitle;
                 titleDiv.textContent = newTitle;
+                CardModel.persist();
                 renderConnections();
             }
         });
@@ -446,6 +451,7 @@ const CardUI = (() => {
             if (e.target === div || e.target === cardContent) {
                 card.nucleus = !card.nucleus;
                 div.classList.toggle("nucleus");
+                CardModel.persist();
             }
         });
 
@@ -457,6 +463,7 @@ const CardUI = (() => {
         deleteBtn.addEventListener("click", () => {
             if (confirm("Are you sure you want to permanently delete this card?")) {
                 CardModel.deleteCard(card.id);
+                CardModel.persist();
                 render();
             }
         });
@@ -497,6 +504,7 @@ const CardUI = (() => {
                 dragBar.releasePointerCapture(dragPointerId);
             }
             dragPointerId = null;
+            CardModel.persist();
             renderConnections();
         }
 
@@ -520,6 +528,7 @@ const CardUI = (() => {
                 div.style.backgroundColor = color;
                 palette.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
                 swatch.classList.add('selected');
+                CardModel.persist();
                 renderConnections();
             });
 
@@ -548,6 +557,7 @@ const CardUI = (() => {
 
                 t.addEventListener("click", () => {
                     card.tags.splice(index, 1);
+                    CardModel.persist();
                     updateTagDisplay();
                 });
                 tagContainer.appendChild(t);
@@ -563,6 +573,7 @@ const CardUI = (() => {
                     const trimmedTag = newTag.trim();
                     if (!card.tags.includes(trimmedTag)) {
                         card.tags.push(trimmedTag);
+                        CardModel.persist();
                         updateTagDisplay();
                     } else {
                         alert("This tag already exists.");
@@ -727,6 +738,7 @@ const CardUI = (() => {
                 resizeHandle.releasePointerCapture(resizePointerId);
             }
             resizePointerId = null;
+            CardModel.persist();
             renderConnections();
         }
 
