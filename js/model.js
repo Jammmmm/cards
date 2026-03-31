@@ -154,10 +154,7 @@ const CardModel = (() => {
             title: sessionTitle,
             zoom,
             cards: JSON.parse(JSON.stringify(cards)),
-            connectors: JSON.parse(JSON.stringify(connectors)),
-            defaultCardTitle,
-            defaultCardBlurb,
-            defaultCardColor
+            connectors: JSON.parse(JSON.stringify(connectors))
         };
     }
 
@@ -171,9 +168,6 @@ const CardModel = (() => {
             cards = loadedData.cards;
             sessionTitle = loadedData.title || '';
             zoom = (typeof loadedData.zoom === 'number' && loadedData.zoom > 0) ? loadedData.zoom : 1;
-            defaultCardTitle = loadedData.defaultCardTitle || "New Title";
-            defaultCardBlurb = loadedData.defaultCardBlurb || "Click to edit...";
-            defaultCardColor = loadedData.defaultCardColor || '#ffffff';
             const cardIds = new Set(cards.map(card => card.id));
             if (Array.isArray(loadedData.connectors)) {
                 const seen = new Set();
@@ -312,6 +306,7 @@ const CardModel = (() => {
         defaultCardTitle = title || "New Title";
         defaultCardBlurb = blurb || "Click to edit...";
         defaultCardColor = color || '#ffffff';
+        localStorage.setItem('cards-defaults', JSON.stringify({ defaultCardTitle, defaultCardBlurb, defaultCardColor }));
     }
 
     function getCardDefaults() {
@@ -323,6 +318,18 @@ const CardModel = (() => {
     }
 
     function loadFromStorage() {
+        const savedDefaults = localStorage.getItem('cards-defaults');
+        if (savedDefaults) {
+            try {
+                const d = JSON.parse(savedDefaults);
+                defaultCardTitle = d.defaultCardTitle || "New Title";
+                defaultCardBlurb = d.defaultCardBlurb || "Click to edit...";
+                defaultCardColor = d.defaultCardColor || '#ffffff';
+            } catch (e) {
+                console.error('Failed to restore card defaults from localStorage:', e);
+            }
+        }
+
         const saved = localStorage.getItem('cards-session');
         if (!saved) return false;
         try {
