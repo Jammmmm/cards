@@ -3,6 +3,14 @@ document.getElementById("add-card").addEventListener("click", () => {
     CardUI.render();
 });
 
+document.getElementById("new-session").addEventListener("click", () => {
+    if (confirm("Are you sure you want to start a new session? All current cards and connections will be lost.")) {
+        CardModel.loadCards({ cards: [], connectors: [] });
+        document.getElementById("session-title").value = "";
+        CardUI.render();
+    }
+});
+
 document.getElementById("export-json").addEventListener("click", () => {
     CardExport.openExportDialog(); 
 });
