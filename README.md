@@ -1,8 +1,10 @@
 This is a fork of [cards](https://github.com/bertjerred/cards) by [@bertjerred](https://github.com/bertjerred). A huge thanks to him for the fantastic original!
 
-This fork adds some new features, that are outlined in CHANGELOG.md. **You can try this fork live** [here](https://jammmmm.github.io/cards/).
+This fork adds some new features, that are outlined in CHANGELOG.md.
 
 AI Note: I have used Claude Code to make several of these changes.
+
+**You can try this fork live** [here](https://jammmmm.github.io/cards/).
 
 Original README.md follows:
 
