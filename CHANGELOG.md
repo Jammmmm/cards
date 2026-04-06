@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.4] - 2026-04-06
+
+ - Added a grid background to help with visual alignment.
+
 ## [1.1.3] - 2026-03-31
 
  - Added Options to allow defaults to be set.
