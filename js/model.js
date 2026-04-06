@@ -8,6 +8,7 @@ const CardModel = (() => {
     let defaultCardTitle = "New Title";
     let defaultCardBlurb = "Click to edit...";
     let defaultCardColor = '#ffffff';
+    let showBackground = true;
 
     function normalizeEndpoint(endpoint, fallbackType = 'card') {
         if (endpoint && typeof endpoint === 'object' && 'id' in endpoint) {
@@ -306,11 +307,18 @@ const CardModel = (() => {
         defaultCardTitle = title != null ? title : "New Title";
         defaultCardBlurb = blurb != null ? blurb : "Click to edit...";
         defaultCardColor = color || '#ffffff';
-        localStorage.setItem('cards-defaults', JSON.stringify({ defaultCardTitle, defaultCardBlurb, defaultCardColor }));
+        localStorage.setItem('cards-defaults', JSON.stringify({ defaultCardTitle, defaultCardBlurb, defaultCardColor, showBackground }));
     }
 
     function getCardDefaults() {
-        return { title: defaultCardTitle, blurb: defaultCardBlurb, color: defaultCardColor };
+        return { title: defaultCardTitle, blurb: defaultCardBlurb, color: defaultCardColor, showBackground };
+    }
+
+    function setShowBackground(value) {
+        showBackground = !!value;
+        localStorage.setItem('cards-defaults', JSON.stringify({
+            defaultCardTitle, defaultCardBlurb, defaultCardColor, showBackground
+        }));
     }
 
     function persist() {
@@ -325,6 +333,7 @@ const CardModel = (() => {
                 defaultCardTitle = d.defaultCardTitle != null ? d.defaultCardTitle : "New Title";
                 defaultCardBlurb = d.defaultCardBlurb != null ? d.defaultCardBlurb : "Click to edit...";
                 defaultCardColor = d.defaultCardColor || '#ffffff';
+                showBackground = d.showBackground !== false;
             } catch (e) {
                 console.error('Failed to restore card defaults from localStorage:', e);
             }
@@ -362,6 +371,7 @@ const CardModel = (() => {
         persist,
         loadFromStorage,
         setCardDefaults,
-        getCardDefaults
+        getCardDefaults,
+        setShowBackground
     };
 })();

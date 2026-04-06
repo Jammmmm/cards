@@ -113,6 +113,7 @@ document.getElementById("options-btn").addEventListener("click", () => {
         palette.appendChild(swatch);
     });
 
+    document.getElementById("show-background").checked = defaults.showBackground;
     document.getElementById("options-modal").style.display = "flex";
 });
 
@@ -125,7 +126,10 @@ document.getElementById("confirm-options").addEventListener("click", () => {
     const blurb = document.getElementById("default-card-blurb").value;
     const selectedSwatch = document.querySelector("#default-color-palette .color-swatch.selected");
     const color = selectedSwatch ? selectedSwatch.dataset.color : '#ffffff';
+    const showBackground = document.getElementById("show-background").checked;
     CardModel.setCardDefaults(title, blurb, color);
+    CardModel.setShowBackground(showBackground);
+    document.getElementById("card-container").classList.toggle("no-background", !showBackground);
     CardModel.persist();
     document.getElementById("options-modal").style.display = "none";
 });
@@ -146,5 +150,8 @@ document.getElementById("close-about").addEventListener("click", () => {
 
 if (CardModel.loadFromStorage()) {
     document.getElementById("session-title").value = CardModel.getSessionTitle();
+}
+if (!CardModel.getCardDefaults().showBackground) {
+    document.getElementById("card-container").classList.add("no-background");
 }
 CardUI.render();
